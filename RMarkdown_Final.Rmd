@@ -66,7 +66,7 @@ data_clean <- data %>%
          remote_ratio = as.factor(remote_ratio),
          work_year = as.factor(work_year),
          company_size = as.factor(company_size)) %>% 
-  select(-salary, -salary_currency, -job_title)
+  select(-salary, -salary_currency, -job_title, -`...1`)
 # Re-order experience level factor for graphing purposes
 data_clean$experience_level <- factor(data_clean$experience_level, levels = c("EN", "MI", "SE", "EX"))
 ```
@@ -112,7 +112,7 @@ ggplot(data = data_clean, aes(x = experience_level, y = salary_in_usd, color = f
   geom_point() +
   facet_wrap(~ remote_ratio) +
   labs(title = "Salary by Experience Level Grouped by Remote Ratio", x = "Experience Level", y = "Salary ($ USD)") +
-  theme_minimal(base_size = 12)
+  theme_minimal(base_size = 16)
 ```
 
 ```{r}

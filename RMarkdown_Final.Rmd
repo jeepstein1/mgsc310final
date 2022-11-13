@@ -131,3 +131,32 @@ ggplot(data = data_clean, aes(x = employment_type, fill = remote_ratio)) +
   labs(title = "Frequency of Employment Type", x = "Employment Type", y = "Count")
 ```
 
+```{r}
+#create lasso model to identify the variables that impact salary_in_usd (training data)
+lasso_mod <- cv.glmnet(salary_in_usd ~ .,
+                       data = data_train,
+                       alpha = 1)
+#print lambda min value
+print(lasso_mod$lambda.min)
+#print lambda 1se value
+print(lasso_mod$lambda.1se)
+#print lasso model
+plot(lasso_mod)
+#from this model, we can observe that a lambda min of 19 variables and a lambda 1se of 6 will give us the optimized range for to minimize cross-validated error in the prediction of salary_in_usd.
+```
+```{r}
+#displays the penalization for variable weights -- sparse penalization between the factoring of variables makes it difficult to manually exclude variables. We will be trusting the lasso model to drop unnecessary variables. 
+coef(lasso_mod, 
+     s = lasso_mod$lambda.1se) %>% 
+  round(3)
+coef(lasso_mod, 
+     s = lasso_mod$lambda.min) %>% 
+  round(3)
+
+```
+```{r}
+#display the variables selected when using lambda 1se
+print(lasso_mod$lambda.1se)
+#display the variables selected when using lambda min
+print(lasso_mod$lambda.min)
+```

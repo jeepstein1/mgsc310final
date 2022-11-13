@@ -58,7 +58,8 @@ data <- read_csv("ds_salaries.csv")
 # Create clean dataset removing salary, salary_currency, and job_title
 # Factor most other variables
 data_clean <- data %>% 
-  mutate(experience_level = as_factor(experience_level),
+  mutate(any_remote = remote_ratio > 0,
+         experience_level = as_factor(experience_level),
          employment_type = as_factor(employment_type),
          employee_residence = fct_lump(employee_residence, 6),
          company_location = fct_lump(company_location, 6),
@@ -133,7 +134,7 @@ ggplot(data = data_clean, aes(x = employment_type, fill = remote_ratio)) +
 
 ```{r}
 #create lasso model to identify the variables that impact salary_in_usd (training data)
-lasso_mod <- cv.glmnet(salary_in_usd ~ .,
+lasso_mod <- cv.glmnet(salary_in_usd ~ . - any_remote,
                        data = data_train,
                        alpha = 1)
 #print lambda min value
@@ -160,3 +161,53 @@ print(lasso_mod$lambda.1se)
 #display the variables selected when using lambda min
 print(lasso_mod$lambda.min)
 ```
+
+---
+
+```{r}
+enet_mod <- cva.glmnet(any_remote ~ . - remote_ratio,
+                       data = data_train,
+                       alpha = seq(0,1, by = 0.05),
+                       family = "binomial")
+plot(enet_mod)
+```
+
+```{r}
+# Really wants to be LASSO
+minlossplot(enet_mod, 
+            cv.type = "min")
+```
+
+```{r}
+get_alpha <- function(fit) {
+  alpha <- fit$alpha
+  error <- sapply(fit$modlist, 
+                  function(mod) {min(mod$cvm)})
+  alpha[which.min(error)]
+}
+
+get_model_params <- function(fit) {
+  alpha <- fit$alpha
+  lambdaMin <- sapply(fit$modlist, `[[`, "lambda.min")
+  lambdaSE <- sapply(fit$modlist, `[[`, "lambda.1se")
+  error <- sapply(fit$modlist, function(mod) {min(mod$cvm)})
+  best <- which.min(error)
+  data.frame(alpha = alpha[best], lambdaMin = lambdaMin[best],
+             lambdaSE = lambdaSE[best], eror = error[best])
+}
+
+# extract the best alpha value and model parameters
+best_alpha <- get_alpha(enet_mod)
+print(best_alpha)
+get_model_params(enet_mod)
+
+# extract the best model object
+best_mod <- enet_mod$modlist[[which(enet_mod$alpha == best_alpha)]]
+plot(best_mod)
+print(best_mod)
+```
+
+```{r}
+coef(best_mod)
+```
+

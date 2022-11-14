@@ -59,6 +59,7 @@ data <- read_csv("ds_salaries.csv")
 # Factor most other variables
 data_clean <- data %>% 
   mutate(any_remote = remote_ratio > 0,
+         same_location = employee_residence == company_location,
          experience_level = as_factor(experience_level),
          employment_type = as_factor(employment_type),
          employee_residence = fct_lump(employee_residence, 6),
@@ -69,6 +70,9 @@ data_clean <- data %>%
   select(-salary, -salary_currency, -job_title, -`...1`)
 # Re-order experience level factor for graphing purposes
 data_clean$experience_level <- factor(data_clean$experience_level, levels = c("EN", "MI", "SE", "EX"))
+
+# Export data
+#write.csv(data_clean, "data_clean.csv", row.names = TRUE)
 ```
 
 ```{r}
@@ -116,6 +120,7 @@ ggplot(data = data_clean, aes(x = experience_level, y = salary_in_usd, color = f
 ```
 
 ```{r}
+summary(data_clean$remote_ratio)
 # Vast majority of data points are remote
 ggplot(data = data_clean, aes(x = remote_ratio, fill = remote_ratio)) +
   geom_bar() +
@@ -205,6 +210,7 @@ get_model_params(enet_mod)
 best_mod <- enet_mod$modlist[[which(enet_mod$alpha == best_alpha)]]
 plot(best_mod)
 print(best_mod)
+print(best_mod$lambda.min)
 ```
 
 ```{r}
